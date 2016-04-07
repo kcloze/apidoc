@@ -8,4 +8,4 @@
     * change tree list,please refer to all.md
 
 ## demo
-![kcloze](apidoc.jpg)
+![kcloze](https://github.com/ycf-php/apidoc/blob/master/apidoc.png)
