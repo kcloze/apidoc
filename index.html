@@ -1,0 +1,255 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    <title>要出发PHP组API文档</title>
+    <link rel="stylesheet" href="editormd/style.css">
+    <link rel="stylesheet" href="editormd/css/editormd.preview.css">
+    <style>
+        body { font-family: "Helvetica Neue",Helvetica,Arial,sans-serif; }
+        .editormd-preview-container blockquote, .editormd-html-preview blockquote { font-style: normal; }
+        #layout { max-width: 1000px; left: 360px; position: relative; background: #fff; padding: 0 40px 20px; }
+        .loading { text-align: center; padding: 30px 0; }
+        #content { overflow: initial; overflow-y: auto; }
+        #table-content h4 { cursor: pointer; background: #eee; padding: 10px; display: inline-block; border-radius: 4px; color: #333; }
+        #table-content h4:hover { color: #4183c4; }
+        .markdown-toc { position: absolute; background: #fff; left: 0; top: 100px; z-index: 10; width: 100%; height: 100%; padding: 0 44px; display: none; }
+        .go-top { display: block; position: fixed; left: 50%; bottom: 50px; margin-left: 540px; background: #ddd; width: 14px; line-height: 18px; padding: 5px; border-radius: 4px; cursor: pointer; color: #000; text-decoration: none; }
+        #all-list { position: fixed; left: 0; top: 0; z-index: 10; background: #fafafa; padding-top: 56px; padding-right: 10px; width: 300px; height: 100%; overflow-y: auto; }
+        #all-list a { color: #364149; }
+        #all-list h5 { margin-bottom: 10px; margin-top: 10px; }
+        #all-list li li h5 a { font-weight: normal; color: #666; }
+        #all-list .active { }
+        #all-list .active a { color: #008cff; }
+        #all-list ul { padding-left: 0; padding-bottom: 20px; margin-left: 24px; }
+        #all-list li { list-style: decimal; }
+        #all-list li li { list-style: inherit; }
+        #all-list ul ul { padding-left: 0; padding-right: 0; padding-bottom: 0; }
+        .markdown-body a.toc-level-1 { display: inline-block; padding-top: 10px; }
+
+        @media print {
+            h4 #h4--enter-, #all-list, #go-top { display: none; }
+        }
+
+        .search-input { position: fixed; left: 0; top: 0; width: 313px; z-index: 100; background: #fafafa;padding:20px 0; }
+        .search-input input { height: 30px; width: 80%; border-radius: 2px; border: 1px solid #ddd; padding: 0 5px;margin:0 auto; }
+    </style>
+</head>
+<body>
+    <div class="search-input"><input type="text" placeholder="请输入关键字" id="J-search"></div>
+    <div id="all-list"></div>
+    <div id="layout">
+        <div id="content">
+            <textarea style="display:none;" name="test-editormd-markdown-doc"></textarea>
+        </div>
+        <div id="table-contents">
+            <textarea id="table-list" style="display:none;">
+
+                ####查看目录（或Enter键）
+
+                [TOC]
+
+            </textarea>
+            <div class="loading">加载中...</div>
+        </div>
+        <a href="#" class="go-top" id="go-top">回到顶部</a>
+    </div>
+
+    <script src="editormd/jquery.min.js"></script>
+    <script src="editormd/lib/marked.min.js"></script>
+    <script src="editormd/lib/prettify.min.js"></script>
+    <script src="editormd/lib/raphael.min.js"></script>
+    <script src="editormd/lib/underscore.min.js"></script>
+    <script src="editormd/lib/sequence-diagram.min.js"></script>
+    <script src="editormd/lib/flowchart.min.js"></script>
+    <script src="editormd/lib/jquery.flowchart.min.js"></script>
+    <script src="editormd/editormd.min.js"></script>
+    <script type="text/javascript">
+
+        var $document = $(document);
+        var $body = $('html, body');
+
+        //获取地址参数
+        function getParam(paramName) {
+            var url = location.href;
+            var obj = new Object();
+            var value = '';
+            if (url.indexOf('#') != -1) {
+                var strs = url.split('#')[1];
+                return strs.split('=')[1];
+            }
+        }
+
+        //加载md文件
+        function getMd(path) {
+            path = path + '?' + new Date().getTime();
+            $.get(path, function (markdown) {
+
+                editormdView = editormd.markdownToHTML("content", {
+                    markdown: '<div id="table-content">\r\n' + $("#table-list").val() + '\r\n</div>' + '\r\n' + markdown,
+                    //htmlDecode      : true,       // 开启HTML标签解析，为了安全性，默认不开启
+                    htmlDecode: "style,script,iframe",  // you can filter tags decode
+                    //toc             : false,
+                    //tocm: true,    // Using [TOCM]
+                    //gfm             : false,
+                    //tocDropdown     : true,
+                    emoji: true,
+                    taskList: true,
+                    tex: true,              // 默认不解析
+                    flowChart: true,         // 默认不解析
+                    sequenceDiagram: true,  // 默认不解析
+                });
+
+                $('.loading').hide();
+                $('.markdown-toc-list').find('li').first().hide();
+
+                //打开目录
+                var toc = $('.markdown-toc');
+                var flag = true;
+                var wst = 0;
+                $document.on('click', '#table-content h4,.markdown-toc-list a', function () {
+                    if (flag) {
+                        wst = $(window).scrollTop();
+                        $body.animate({
+                            scrollTop: 0
+                        }, 0, function () {
+                            toc.stop(true, false).show();
+                            flag = false;
+                        });
+
+                    } else {
+                        $body.animate({
+                            scrollTop: wst
+                            //scrollTop: 0
+                        }, 0, function () {
+                            toc.stop(true, false).hide();
+                            flag = true;
+                        });
+                    }
+                });
+
+                // Enter键打开
+                $document.on('keyup', function (e) {
+                    var code = e.keyCode;
+                    if (code == 13) {
+                        $('#table-content').find('h4').trigger('click');
+                    }
+                    return false;
+                });
+
+                //回到顶部
+                $document.on('click', '#go-top', function () {
+                    $body.animate({
+                        scrollTop: 0
+                    }, 400);
+                    return false;
+                });
+
+            });
+        }
+
+        //加载API列表
+        function getList(path) {
+            $.get(path + '?' + new Date().getTime(), function (markdown) {
+                editormdView2 = editormd.markdownToHTML('all-list', {
+                    markdown: markdown,
+
+                    emoji: true,
+                    taskList: true,
+                    tex: true,              // 默认不解析
+                    flowChart: true,         // 默认不解析
+                    sequenceDiagram: true,  // 默认不解析
+                });
+
+                //默认高亮列表
+                var $allList = $('#all-list');
+                $allList.find('h5').first().addClass('active');
+                $allList.find('a').each(function (i) {
+                    var $this = $(this);
+                    var href = $this.attr('href');
+                    var top = $this.offset().top;
+                    $this.attr('data-top', top);
+                    if (apiName && apiName == href) {
+                        $allList.find('h5,h6').removeClass('active');
+                        $this.closest('h5,h6').addClass('active');
+                        $allList.animate({
+                            scrollTop: $this.attr('data-top') - 10
+                        }, 300);
+                    }
+                });
+
+                //点击切换
+                $allList.find('a').on('click', function () {
+                    var $this = $(this);
+                    var top = $this.attr('data-top');
+                    var link = $this.attr('href');
+                    $allList.find('h5,h6').removeClass('active');
+                    $this.closest('h5,h6').addClass('active');
+                    if (link != '' && link != '#') {
+                        $allList.animate({
+                            scrollTop: top - 10
+                        }, 400);
+                        $('#content').html('');
+                        $('.loading').show();
+                        getMd(link);
+                        location.hash = 'api=' + link;
+                    }
+                    return false;
+                });
+
+                var $link = $allList.find('a');
+                var $li = $allList.find('li');
+
+                // 搜索
+                $('#J-search').on('keyup', function () {
+                    var keyWord = $.trim($(this).val());
+                    $li.hide();
+                    if (keyWord == '') {
+                        $li.show();
+                    } else {
+                        setTimeout(function () {
+
+                            $.ajax({
+                                url: 'http://phpdoc.yaochufa.com/search.php',
+                                data: {
+                                    keyword: keyWord
+                                },
+                                dataType: 'jsonp',
+                                success: function (result) {
+                                    if (result.content&&result.content.length) {
+                                        $link.each(function () {
+                                            var $this = $(this);
+                                            var href = $this.attr('href');
+                                            var i = 0;
+                                            for (; i < result.content.length; i++) {
+                                                console.log(result.content[i].url)
+                                                if (href == result.content[i].url) {
+                                                    $this.closest('li').show();
+                                                }
+                                            }
+
+                                        });
+                                    }
+                                }
+                            });
+                        }, 100);
+                    }
+                });
+
+            });
+        }
+
+        //默认加载数据
+        var apiName = getParam('api');
+        if (apiName) {
+            getMd(apiName);
+        } else {
+            getMd('demo.md');
+        }
+
+        // 默认加载列表
+        getList('all.md');
+
+    </script>
+</body>
+</html>
