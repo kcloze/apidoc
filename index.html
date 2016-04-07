@@ -25,18 +25,22 @@
         #all-list li { list-style: decimal; }
         #all-list li li { list-style: inherit; }
         #all-list ul ul { padding-left: 0; padding-right: 0; padding-bottom: 0; }
+        #all-list .result-list { padding-top: 20px; }
+        #all-list .result-list li { line-height: 26px; }
         .markdown-body a.toc-level-1 { display: inline-block; padding-top: 10px; }
 
         @media print {
             h4 #h4--enter-, #all-list, #go-top { display: none; }
         }
 
-        .search-input { position: fixed; left: 0; top: 0; width: 313px; z-index: 100; background: #fafafa;padding:20px 0; }
-        .search-input input { height: 30px; width: 80%; border-radius: 2px; border: 1px solid #ddd; padding: 0 5px;margin:0 auto; }
+        .search-input { position: fixed; left: 0; top: 0; width: 313px; z-index: 100; background: #fafafa; padding: 20px 0; }
+        .search-input input { height: 30px; width: 200px; border-radius: 2px 0 0 2px; border: 1px solid #ddd; padding: 0 5px; margin: 0 auto; outline: none; }
+        .search-input button { width: 50px; height: 32px; border: 1px solid #ddd; border-left: none; background: #ddd; border-radius: 0 2px 2px 0; outline: none; }
+        .loading { text-align: center; }
     </style>
 </head>
 <body>
-    <div class="search-input"><input type="text" placeholder="请输入关键字" id="J-search"></div>
+    <form class="search-input" id="J-search"><input type="text" placeholder="请输入关键字"><button type="submit">搜索</button></form>
     <div id="all-list"></div>
     <div id="layout">
         <div id="content">
@@ -45,7 +49,7 @@
         <div id="table-contents">
             <textarea id="table-list" style="display:none;">
 
-                ####查看目录（或Enter键）
+                ####查看目录
 
                 [TOC]
 
@@ -54,7 +58,6 @@
         </div>
         <a href="#" class="go-top" id="go-top">回到顶部</a>
     </div>
-
     <script src="editormd/jquery.min.js"></script>
     <script src="editormd/lib/marked.min.js"></script>
     <script src="editormd/lib/prettify.min.js"></script>
@@ -68,6 +71,49 @@
 
         var $document = $(document);
         var $body = $('html, body');
+        var $search = $('#J-search');
+
+        // 添加元素
+        Array.prototype.add = function (val) {
+            var index = this.indexOf(val);
+            if (index < 0) {
+                this.push(val);
+            }
+        };
+
+        // 高亮文字
+        function highLight(wrapper, keyword) {
+            var elem = document.getElementById(wrapper);
+            if (keyword == '') return;
+            var temp = elem.innerHTML;
+            var htmlReg = new RegExp('\<.*?\>', 'i');
+            var arr = [];
+
+            //替换HTML标签
+            for (var i = 0; true; i++) {
+                var m = htmlReg.exec(temp);
+                if (m) {
+                    arr[i] = m;
+                }
+                else {
+                    break;
+                }
+                temp = temp.replace(m, '{[(' + i + ')]}');
+            }
+            words = unescape(keyword.replace(/\+/g, ' ')).split(/\s+/);
+
+            //替换关键字
+            for (w = 0; w < words.length; w++) {
+                var r = new RegExp('(' + words[w].replace(/[(){}.+*?^$|\\\[\]]/g, '\\$&') + ')', 'ig');
+                temp = temp.replace(r, '<span style="background:yellow;">$1<\/span>');
+            }
+
+            //恢复HTML标签
+            for (var i = 0; i < arr.length; i++) {
+                temp = temp.replace('{[(' + i + ')]}', arr[i]);
+            }
+            elem.innerHTML = temp;
+        }
 
         //获取地址参数
         function getParam(paramName) {
@@ -103,6 +149,9 @@
                 $('.loading').hide();
                 $('.markdown-toc-list').find('li').first().hide();
 
+                // 高亮文字
+                //highLight('container', $.trim($('#J-search').val()));
+
                 //打开目录
                 var toc = $('.markdown-toc');
                 var flag = true;
@@ -129,13 +178,13 @@
                 });
 
                 // Enter键打开
-                $document.on('keyup', function (e) {
+                /*$document.on('keyup', function (e) {
                     var code = e.keyCode;
                     if (code == 13) {
                         $('#table-content').find('h4').trigger('click');
                     }
                     return false;
-                });
+                });*/
 
                 //回到顶部
                 $document.on('click', '#go-top', function () {
@@ -153,7 +202,6 @@
             $.get(path + '?' + new Date().getTime(), function (markdown) {
                 editormdView2 = editormd.markdownToHTML('all-list', {
                     markdown: markdown,
-
                     emoji: true,
                     taskList: true,
                     tex: true,              // 默认不解析
@@ -179,7 +227,7 @@
                 });
 
                 //点击切换
-                $allList.find('a').on('click', function () {
+                $allList.on('click', 'a', function () {
                     var $this = $(this);
                     var top = $this.attr('data-top');
                     var link = $this.attr('href');
@@ -197,42 +245,60 @@
                     return false;
                 });
 
+                var $temp = $allList.html();
                 var $link = $allList.find('a');
-                var $li = $allList.find('li');
 
                 // 搜索
-                $('#J-search').on('keyup', function () {
-                    var keyWord = $.trim($(this).val());
-                    $li.hide();
+                $search.on('submit', function () {
+                    var keyWord = $.trim($(this).find('input').val());
                     if (keyWord == '') {
-                        $li.show();
-                    } else {
-                        setTimeout(function () {
+                        alert('请输入关键字');
+                        return false;
+                    }
 
-                            $.ajax({
-                                url: 'http://phpdoc.yaochufa.com/search.php',
-                                data: {
-                                    keyword: keyWord
-                                },
-                                dataType: 'jsonp',
-                                success: function (result) {
-                                    if (result.content&&result.content.length) {
-                                        $link.each(function () {
-                                            var $this = $(this);
-                                            var href = $this.attr('href');
-                                            var i = 0;
-                                            for (; i < result.content.length; i++) {
-                                                console.log(result.content[i].url)
-                                                if (href == result.content[i].url) {
-                                                    $this.closest('li').show();
-                                                }
-                                            }
+                    setTimeout(function () {
 
-                                        });
+                        $.ajax({
+                            url: 'search.php',
+                            data: {
+                                keyword: keyWord
+                            },
+                            dataType: 'jsonp',
+                            beforeSend: function () {
+                                $allList.html('<div class="loading">Loading...</div>')
+                            },
+                            success: function (result) {
+                                console.log(result)
+                                if (result.content && result.content.length) {
+
+                                    var arr = [];
+                                    var li = '';
+                                    var i = 0;
+                                    for (; i < result.content.length; i++) {
+                                        if (result.content[i].name != null) {
+                                            li += '<li><a href="' + result.content[i].url + '">' + result.content[i].name + '</a></li>';
+                                        }
                                     }
+
+                                    $allList.html('<ul class="result-list">' + li + '</ul>');
+
+                                    // 高亮
+                                    //highLight('all-list', keyWord);
+
+                                } else {
+                                    $allList.html('<div class="loading">找不到相关结果！</div>');
                                 }
-                            });
-                        }, 100);
+                            }
+                        });
+                    }, 100);
+                    return false;
+
+                    return false;
+                });
+
+                $search.find('input').on('keyup', function (e) {
+                    if ($.trim($(this).val()) == '') {
+                        $allList.html($temp);
                     }
                 });
 
