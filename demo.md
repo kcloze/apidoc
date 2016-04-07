@@ -20,7 +20,7 @@
 
 ####开发者：
 
-> [@李小培](http://wpa.qq.com/msgrd?v=3&uin=460309735&site=qq&menu=yes)
+> [@kcloze](http://wpa.qq.com/msgrd?v=3&uin=460309735&site=qq&menu=yes)
 
 ####请求地址：
 
@@ -96,7 +96,7 @@
 
 ####开发者：
 
-> [@李小培](http://wpa.qq.com/msgrd?v=3&uin=460309735&site=qq&menu=yes)
+> [@kcloze](http://wpa.qq.com/msgrd?v=3&uin=460309735&site=qq&menu=yes)
 
 ####请求地址：
 
