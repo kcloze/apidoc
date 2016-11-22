@@ -9,4 +9,4 @@
     * if you need search in document,have to run in linux and PHP env
 
 ## demo
-![kcloze](https://github.com/ycf-php/apidoc/blob/master/apidoc.png)
+![kcloze](apidoc.png)
